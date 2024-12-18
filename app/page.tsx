@@ -1,234 +1,262 @@
 "use client";
 
 import React, { useState } from "react";
-import { Info, TreePine } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plant, DICOTYL_PLANTS } from "@/data/dicotil";
+import { TreePine, Search, HelpCircle, RefreshCcw } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  CharacteristicOption,
+  EXPANDED_CHARACTERISTIC_STEPS,
+} from "@/data/step";
 
-type PlantCharacteristic = string;
-
-interface Plant {
-  name: string;
-  scientificName: string;
-  characteristics: PlantCharacteristic[];
-  habitat: string;
-  uniqueFeatures: string[];
-}
-
-interface CharacteristicOption {
-  label: string;
-  value: string;
-}
-
-interface CharacteristicStep {
-  title: string;
-  options: CharacteristicOption[];
-}
-
-
-const DICOTYL_PLANTS: Plant[] = [
-  {
-    name: "Mangga",
-    scientificName: "Mangifera indica",
-    characteristics: [
-      "Dua keping biji terpisah saat berkecambah",
-      "Daun tunggal oval, runcing, hijau tua",
-      "Batang keras, tinggi 10-40 meter",
-      "Akar tunggang kuat",
-      "Bunga berkelompok putih atau kuning",
-      "Tumbuh di daerah tropis dan subtropis",
-    ],
-    habitat: "Tropis dan subtropis",
-    uniqueFeatures: ["Buah manis", "Aroma khas"],
-  },
-  {
-    name: "Karet",
-    scientificName: "Hevea brasiliensis",
-    characteristics: [
-      "Dua keping biji terpecah saat berkecambah",
-      "Batang tegak hingga 30 meter",
-      "Mengeluarkan getah putih",
-      "Daun majemuk 3-5 anak daun oval",
-      "Akar tunggang dalam dan bercabang",
-      "Bunga kecil putih kehijauan",
-    ],
-    habitat: "Tropis dengan curah hujan tinggi",
-    uniqueFeatures: ["Produksi karet alami", "Getah putih"],
-  },
-  // Add other plants from the document
-  {
-    name: "Tomat",
-    scientificName: "Solanum lycopersicum",
-    characteristics: [
-      "Dua keping biji terpisah saat berkecambah",
-      "Daun menyirip hijau tua, bergerigi",
-      "Batang lunak bercabang, tinggi 2 meter",
-      "Buah bulat/lonjong, warna merah/kuning/hijau",
-      "Bunga kecil kuning berkelompok",
-    ],
-    habitat: "Iklim sedang hingga tropis",
-    uniqueFeatures: ["Mengandung likopen", "Kaya vitamin C"],
-  },
-  {
-    name: "Cabai",
-    scientificName: "Capsicum annuum",
-    characteristics: [
-      "Dua keping biji terpecah saat berkecambah",
-      "Batang tegak 50-100 cm",
-      "Daun oval bergerigi hijau cerah",
-      "Akar tunggang kuat",
-      "Bunga kecil putih/kuning",
-      "Buah hijau saat muda, merah saat matang",
-    ],
-    habitat: "Tropis dan subtropis",
-    uniqueFeatures: ["Rasa pedas", "Kaya vitamin C"],
-  },
-  // More plants can be added
-];
-
-// Rule-based reasoning system
-const RuleBasedExpertSystem: React.FC = () => {
-  const [selectedCharacteristics, setSelectedCharacteristics] = useState<
-    string[]
-  >([]);
-  const [matchedPlants, setMatchedPlants] = useState<Plant[]>([]);
+const RuleBasedExpertSystemPage = () => {
   const [step, setStep] = useState<number>(0);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [matchedPlants, setMatchedPlants] = useState<Plant[]>([]);
 
-  // Characteristic selection steps
-  const CHARACTERISTIC_STEPS: CharacteristicStep[] = [
-    {
-      title: "Tipe Biji Saat Berkecambah",
-      options: [
-        { label: "Dua keping terpisah", value: "dua keping biji terpisah" },
-        { label: "Lainnya", value: "other" },
-      ],
-    },
-    {
-      title: "Struktur Daun",
-      options: [
-        { label: "Daun Tunggal", value: "daun tunggal" },
-        { label: "Daun Majemuk", value: "daun majemuk" },
-        { label: "Lainnya", value: "other" },
-      ],
-    },
-    {
-      title: "Habitat Utama",
-      options: [
-        { label: "Tropis", value: "tropis" },
-        { label: "Subtropis", value: "subtropis" },
-        { label: "Iklim Sedang", value: "iklim sedang" },
-      ],
-    },
-  ];
+  const [advancedFilters, setAdvancedFilters] = useState<{
+    economicValue?: string[];
+    conservationStatus?: string[];
+    habitats?: string[];
+  }>({});
+
+  const [selectedCharacteristics, setSelectedCharacteristics] = useState<{
+    [key: string]: string;
+  }>({});
 
   const resetSystem = (): void => {
-    setSelectedCharacteristics([]);
-    setMatchedPlants([]);
     setStep(0);
+    setSearchTerm("");
+    setMatchedPlants([]);
+    setSelectedCharacteristics({});
+    setAdvancedFilters({});
   };
 
-  const handleCharacteristicSelection = (characteristic: string): void => {
-    const updatedCharacteristics = [...selectedCharacteristics, characteristic];
-    setSelectedCharacteristics(updatedCharacteristics);
+  // Handle characteristic selection
+  const handleCharacteristicSelection = (option: CharacteristicOption) => {
+    setSelectedCharacteristics((prev) => ({
+      ...prev,
+      [option.type]: option.value,
+    }));
 
-    // Move to next step or find matches
-    if (step < CHARACTERISTIC_STEPS.length - 1) {
+    if (step < EXPANDED_CHARACTERISTIC_STEPS.length - 1) {
       setStep((prevStep) => prevStep + 1);
     } else {
-      // Rule-based matching
-      const matches = DICOTYL_PLANTS.filter((plant) =>
-        updatedCharacteristics.some((char) =>
-          plant.characteristics.some((pc) =>
-            pc.toLowerCase().includes(char.toLowerCase())
-          )
-        )
-      );
-      setMatchedPlants(matches);
+      findMatches();
     }
   };
 
-  return (
-    <div className="p-4 max-w-2xl mx-auto">
-      <Card>
+  // Match plants based on selected characteristics
+  const findMatches = () => {
+    const matches = DICOTYL_PLANTS.filter((plant) => {
+      // Filter berdasarkan karakteristik dasar
+      const basicMatch = Object.entries(selectedCharacteristics).every(
+        ([key, value]) => {
+          switch (key) {
+            case "leafType":
+              return plant.leafType === value;
+            case "habitat":
+              return plant.habitat.includes(value);
+            default:
+              return true;
+          }
+        }
+      );
+
+      // Filter lanjutan
+      const advancedMatch =
+        (!advancedFilters.economicValue ||
+          advancedFilters.economicValue.some((val) =>
+            plant.economicValue?.includes(val)
+          )) &&
+        (!advancedFilters.conservationStatus ||
+          advancedFilters.conservationStatus.includes(
+            plant.conservationStatus || ""
+          )) &&
+        (!advancedFilters.habitats ||
+          advancedFilters.habitats.some((habitat) =>
+            plant.habitat.includes(habitat)
+          ));
+
+      // Filter pencarian teks
+      const searchMatch = searchTerm
+        ? plant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          plant.scientificName.toLowerCase().includes(searchTerm.toLowerCase())
+        : true;
+
+      return basicMatch && advancedMatch && searchMatch;
+    });
+
+    setMatchedPlants(matches);
+  };
+
+  // Render langkah karakteristik
+  const renderCharacteristicStep = () => {
+    const currentStep = EXPANDED_CHARACTERISTIC_STEPS[step];
+    return (
+      <Card className="w-full">
         <CardHeader>
-          <CardTitle className="flex items-center">
-            <TreePine className="mr-2" /> Sistem Pakar Tanaman Dikotil
-          </CardTitle>
+          <CardTitle>{currentStep.title}</CardTitle>
+          <CardDescription>{currentStep.description}.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          {currentStep.options.map((option, index) => (
+            <Button
+              key={index}
+              variant="outline"
+              className="w-full justify-between"
+              onClick={() => handleCharacteristicSelection(option)}
+            >
+              {option.label}
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>
+                    <HelpCircle className="ml-2 h-4 w-4 text-gray-500" />
+                  </TooltipTrigger>
+                  <TooltipContent>{option.description}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </Button>
+          ))}
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Render hasil pencarian
+  const renderSearchResults = () => {
+    return (
+      <div>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">
+            {matchedPlants.length} Tanaman Ditemukan.
+          </h2>
+          <Button onClick={resetSystem} variant="outline">
+            <RefreshCcw className="mr" /> Ulangi
+          </Button>
+        </div>
+
+        {/* Accordion untuk detail tanaman */}
+        <Accordion type="single" collapsible>
+          {matchedPlants.map((plant, index) => (
+            <AccordionItem value={`plant-${index}`} key={index}>
+              <AccordionTrigger>
+                <div>
+                  {plant.name} <em>({plant.scientificName})</em>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="md:col-span-2 flex justify-center">
+                    <img
+                      src={plant.image}
+                      alt={plant.name}
+                      className="max-w-full md:w-2/3 lg:w-1/2 h-auto rounded-lg shadow-md md:my-4"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Karakteristik</h3>
+                    <ul className="list-disc pl-5">
+                      {plant.characteristics.map((char, i) => (
+                        <li key={i}>{char}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <p>
+                      <strong>Habitat:</strong> {plant.habitat.join(", ")}
+                    </p>
+                    <p>
+                      <strong>Tinggi:</strong> {plant.height.min}-
+                      {plant.height.max} {plant.height.unit}
+                    </p>
+                    <p>
+                      <strong>Warna Bunga:</strong>{" "}
+                      {plant.bloomColor.join(", ")}
+                    </p>
+                    {plant.economicValue && (
+                      <p>
+                        <strong>Nilai Ekonomi:</strong>{" "}
+                        {plant.economicValue.join(", ")}
+                      </p>
+                    )}
+                    {plant.conservationStatus && (
+                      <p>
+                        <strong>Status Konservasi:</strong>{" "}
+                        {plant.conservationStatus}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
+    );
+  };
+
+  return (
+    <div className="container mx-auto p-4 max-w-6xl">
+      <Card>
+        <CardHeader className="flex flex-row items-center">
+          <TreePine className="mr-3" />
+          <div>
+            <CardTitle>Sistem Pakar Tanaman Dikotil</CardTitle>
+            <CardDescription>
+              Temukan dan identifikasi tanaman dikotil dengan mudah.
+            </CardDescription>
+          </div>
         </CardHeader>
         <CardContent>
           {matchedPlants.length > 0 ? (
-            <div>
-              <h2 className="text-xl font-bold mb-4">Hasil Identifikasi:</h2>
-              {matchedPlants.map((plant, index) => (
-                <Card key={index} className="mb-4">
-                  <CardHeader>
-                    <CardTitle>
-                      {plant.name} ({plant.scientificName})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <h3 className="font-semibold">Karakteristik:</h3>
-                    <ul className="list-disc pl-5">
-                      {plant.characteristics.map((char, charIndex) => (
-                        <li key={charIndex}>{char}</li>
-                      ))}
-                    </ul>
-                    <div className="mt-2">
-                      <strong>Habitat:</strong> {plant.habitat}
-                    </div>
-                    <div className="mt-2">
-                      <strong>Keunikan:</strong>{" "}
-                      {plant.uniqueFeatures.join(", ")}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              <Button onClick={resetSystem} className="mt-4">
-                Mulai Ulang Identifikasi
-              </Button>
-            </div>
-          ) : (
-            <div>
-              <h2 className="text-xl font-bold mb-4">
-                {CHARACTERISTIC_STEPS[step].title}
-              </h2>
-              <div className="space-y-2">
-                {CHARACTERISTIC_STEPS[step].options.map((option, index) => (
-                  <Button
-                    key={index}
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => handleCharacteristicSelection(option.value)}
-                  >
-                    {option.label}
-                  </Button>
-                ))}
+            <>
+              <div className="mb-4">
+                <div className="relative flex-grow">
+                  <Search
+                    size={16}
+                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                  />
+                  <Input
+                    placeholder="Cari tanaman..."
+                    value={searchTerm}
+                    onChange={(e) => {
+                      setSearchTerm(e.target.value);
+                      findMatches();
+                    }}
+                    className="pl-10"
+                  />
+                </div>
               </div>
-              {step > 0 && (
-                <Button
-                  variant="ghost"
-                  className="mt-4"
-                  onClick={() => setStep(step - 1)}
-                >
-                  Kembali
-                </Button>
-              )}
-            </div>
+              {renderSearchResults()}
+            </>
+          ) : (
+            renderCharacteristicStep()
           )}
         </CardContent>
       </Card>
-      <Alert className="mt-4">
-        <Info className="h-4 w-4" />
-        <AlertTitle>Sistem Pakar Tanaman Dikotil</AlertTitle>
-        <AlertDescription>
-          Sistem ini menggunakan penalaran berbasis aturan untuk
-          mengidentifikasi tanaman dikotil berdasarkan karakteristik yang Anda
-          pilih.
-        </AlertDescription>
-      </Alert>
     </div>
   );
 };
 
-export default RuleBasedExpertSystem;
+export default RuleBasedExpertSystemPage;
