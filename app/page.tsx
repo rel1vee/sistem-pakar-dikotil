@@ -208,17 +208,17 @@ const RuleBasedExpertSystemPage = () => {
 
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">
-            {matchedPlants.length} Tanaman Ditemukan
+            {matchedPlants.length} Tanaman Ditemukan.
           </h2>
           <div className="flex items-center space-x-2">
             <Button
               onClick={() => setIsFilterDrawerOpen(true)}
               variant="outline"
             >
-              <Filter className="mr-2 h-4 w-4" /> Filter
+              <Filter className="mr-1 h-4 w-4" /> Filter
             </Button>
             <Button onClick={resetSystem} variant="outline">
-              <RefreshCcw className="mr-2 h-4 w-4" /> Ulangi
+              <RefreshCcw className="mr-1 h-4 w-4" /> Ulangi
             </Button>
           </div>
         </div>
@@ -227,7 +227,7 @@ const RuleBasedExpertSystemPage = () => {
           {matchedPlants.map((plant, index) => (
             <AccordionItem value={`plant-${index}`} key={index}>
               <AccordionTrigger>
-                <div className="flex items-center space-x-2">
+                <div className="items-center space-x-2">
                   {plant.name} <em>({plant.scientificName})</em>
                   {plant.conservationStatus && (
                     <Badge variant="outline">{plant.conservationStatus}</Badge>
@@ -287,7 +287,7 @@ const RuleBasedExpertSystemPage = () => {
           <DrawerHeader>
             <DrawerTitle>Filter Lanjutan</DrawerTitle>
             <DrawerDescription>
-              Sesuaikan pencarian tanaman Anda
+              Sesuaikan pencarian tanaman Anda.
             </DrawerDescription>
           </DrawerHeader>
           <div className="p-4 space-y-4">
@@ -375,7 +375,7 @@ const RuleBasedExpertSystemPage = () => {
                 className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
               />
               <Input
-                placeholder="Cari tanaman..."
+                placeholder="Masukkan ciri-ciri tanaman..."
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
