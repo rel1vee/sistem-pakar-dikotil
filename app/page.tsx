@@ -1,10 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { Plant, DICOTYL_PLANTS } from "@/data/dicotil";
-import { TreePine, Search, HelpCircle, RefreshCcw } from "lucide-react";
+import {
+  TreePine,
+  Search,
+  HelpCircle,
+  RefreshCcw,
+  AlertTriangle,
+  Filter,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -25,90 +29,138 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
+import {
   CharacteristicOption,
   EXPANDED_CHARACTERISTIC_STEPS,
 } from "@/data/step";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import React, { useMemo, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+type AdvancedFilters = {
+  economicValue?: string[];
+  conservationStatus?: string[];
+  habitats?: string[];
+};
 
 const RuleBasedExpertSystemPage = () => {
   const [step, setStep] = useState<number>(0);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [matchedPlants, setMatchedPlants] = useState<Plant[]>([]);
-
-  const [advancedFilters, setAdvancedFilters] = useState<{
-    economicValue?: string[];
-    conservationStatus?: string[];
-    habitats?: string[];
-  }>({});
+  const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
+  const [isAdvancedMode, setIsAdvancedMode] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [advancedFilters, setAdvancedFilters] = useState<AdvancedFilters>({});
 
   const [selectedCharacteristics, setSelectedCharacteristics] = useState<{
     [key: string]: string;
   }>({});
 
-  const resetSystem = (): void => {
+  // Reset System State
+  const resetSystem = () => {
     setStep(0);
     setSearchTerm("");
     setMatchedPlants([]);
     setSelectedCharacteristics({});
     setAdvancedFilters({});
+    setErrorMessage(null);
   };
 
-  // Handle characteristic selection
+  // Characteristic Selection Handler
   const handleCharacteristicSelection = (option: CharacteristicOption) => {
-    setSelectedCharacteristics((prev) => ({
-      ...prev,
-      [option.type]: option.value,
-    }));
+    if (!option || !option.type) {
+      setErrorMessage("Pilihan tidak valid");
+      return;
+    }
 
-    if (step < EXPANDED_CHARACTERISTIC_STEPS.length - 1) {
-      setStep((prevStep) => prevStep + 1);
-    } else {
-      findMatches();
+    try {
+      setSelectedCharacteristics((prev) => ({
+        ...prev,
+        [option.type]: option.value,
+      }));
+
+      const nextStep = step + 1;
+      if (nextStep < EXPANDED_CHARACTERISTIC_STEPS.length) {
+        setStep(nextStep);
+      } else {
+        findMatches();
+      }
+    } catch {
+      setErrorMessage("Kesalahan dalam memilih karakteristik");
+      resetSystem();
     }
   };
 
-  // Match plants based on selected characteristics
-  const findMatches = () => {
-    const matches = DICOTYL_PLANTS.filter((plant) => {
-      // Filter berdasarkan karakteristik dasar
-      const basicMatch = Object.entries(selectedCharacteristics).every(
-        ([key, value]) => {
-          switch (key) {
-            case "leafType":
-              return plant.leafType === value;
-            case "habitat":
-              return plant.habitat.includes(value);
-            default:
-              return true;
-          }
-        }
-      );
+  // Improved Match Finding Logic
+  const findMatches = useMemo(() => {
+    return () => {
+      try {
+        const matches = DICOTYL_PLANTS.filter((plant) => {
+          // Basic Characteristic Matching
+          const basicMatches = Object.entries(selectedCharacteristics).every(
+            ([key, value]) => {
+              switch (key) {
+                case "leafType":
+                  return plant.leafType === value;
+                case "habitat":
+                  return plant.habitat.includes(value);
+                default:
+                  return true;
+              }
+            }
+          );
 
-      // Filter lanjutan
-      const advancedMatch =
-        (!advancedFilters.economicValue ||
-          advancedFilters.economicValue.some((val) =>
-            plant.economicValue?.includes(val)
-          )) &&
-        (!advancedFilters.conservationStatus ||
-          advancedFilters.conservationStatus.includes(
-            plant.conservationStatus || ""
-          )) &&
-        (!advancedFilters.habitats ||
-          advancedFilters.habitats.some((habitat) =>
-            plant.habitat.includes(habitat)
-          ));
+          // Advanced Filtering
+          const advancedMatches =
+            (!advancedFilters.economicValue ||
+              (plant.economicValue &&
+                advancedFilters.economicValue.some((val) =>
+                  plant.economicValue?.includes(val)
+                ))) &&
+            (!advancedFilters.conservationStatus ||
+              plant.conservationStatus ===
+                advancedFilters.conservationStatus[0]) &&
+            (!advancedFilters.habitats ||
+              advancedFilters.habitats.some((habitat) =>
+                plant.habitat.includes(habitat)
+              ));
 
-      // Filter pencarian teks
-      const searchMatch = searchTerm
-        ? plant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          plant.scientificName.toLowerCase().includes(searchTerm.toLowerCase())
-        : true;
+          // Flexible Search Matching
+          const searchMatch =
+            !searchTerm ||
+            plant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            plant.scientificName
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase()) ||
+            plant.characteristics.some((char) =>
+              char.toLowerCase().includes(searchTerm.toLowerCase())
+            );
 
-      return basicMatch && advancedMatch && searchMatch;
-    });
+          return basicMatches && advancedMatches && searchMatch;
+        });
 
-    setMatchedPlants(matches);
-  };
+        setMatchedPlants(matches);
+        setErrorMessage(
+          matches.length === 0 ? "Tidak ada tanaman ditemukan" : null
+        );
+        return matches;
+      } catch {
+        setErrorMessage("Terjadi kesalahan dalam pencarian");
+        return [];
+      }
+    };
+  }, [selectedCharacteristics, advancedFilters, searchTerm]);
 
   // Render langkah karakteristik
   const renderCharacteristicStep = () => {
@@ -143,26 +195,43 @@ const RuleBasedExpertSystemPage = () => {
     );
   };
 
-  // Render hasil pencarian
+  // Render Search Results
   const renderSearchResults = () => {
     return (
       <div>
+        {errorMessage && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{errorMessage}</AlertDescription>
+          </Alert>
+        )}
+
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">
-            {matchedPlants.length} Tanaman Ditemukan.
+            {matchedPlants.length} Tanaman Ditemukan
           </h2>
-          <Button onClick={resetSystem} variant="outline">
-            <RefreshCcw className="mr" /> Ulangi
-          </Button>
+          <div className="flex items-center space-x-2">
+            <Button
+              onClick={() => setIsFilterDrawerOpen(true)}
+              variant="outline"
+            >
+              <Filter className="mr-2 h-4 w-4" /> Filter
+            </Button>
+            <Button onClick={resetSystem} variant="outline">
+              <RefreshCcw className="mr-2 h-4 w-4" /> Ulangi
+            </Button>
+          </div>
         </div>
 
-        {/* Accordion untuk detail tanaman */}
         <Accordion type="single" collapsible>
           {matchedPlants.map((plant, index) => (
             <AccordionItem value={`plant-${index}`} key={index}>
               <AccordionTrigger>
-                <div>
+                <div className="flex items-center space-x-2">
                   {plant.name} <em>({plant.scientificName})</em>
+                  {plant.conservationStatus && (
+                    <Badge variant="outline">{plant.conservationStatus}</Badge>
+                  )}
                 </div>
               </AccordionTrigger>
               <AccordionContent>
@@ -175,7 +244,7 @@ const RuleBasedExpertSystemPage = () => {
                     />
                   </div>
                   <div>
-                    <h3 className="font-semibold">Karakteristik</h3>
+                    <h3 className="font-semibold mb-2">Karakteristik</h3>
                     <ul className="list-disc pl-5">
                       {plant.characteristics.map((char, i) => (
                         <li key={i}>{char}</li>
@@ -200,12 +269,6 @@ const RuleBasedExpertSystemPage = () => {
                         {plant.economicValue.join(", ")}
                       </p>
                     )}
-                    {plant.conservationStatus && (
-                      <p>
-                        <strong>Status Konservasi:</strong>{" "}
-                        {plant.conservationStatus}
-                      </p>
-                    )}
                   </div>
                 </div>
               </AccordionContent>
@@ -213,6 +276,82 @@ const RuleBasedExpertSystemPage = () => {
           ))}
         </Accordion>
       </div>
+    );
+  };
+
+  // Advanced Filter Drawer
+  const renderAdvancedFilters = () => {
+    return (
+      <Drawer open={isFilterDrawerOpen} onOpenChange={setIsFilterDrawerOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>Filter Lanjutan</DrawerTitle>
+            <DrawerDescription>
+              Sesuaikan pencarian tanaman Anda
+            </DrawerDescription>
+          </DrawerHeader>
+          <div className="p-4 space-y-4">
+            {/* Tambahkan filter lanjutan di sini */}
+            <div className="flex items-center justify-between">
+              <label>Mode Pencarian Lanjutan</label>
+              <Switch
+                checked={isAdvancedMode}
+                onCheckedChange={setIsAdvancedMode}
+              />
+            </div>
+            {isAdvancedMode && (
+              <div className="space-y-2">
+                {/* Contoh filter ekonomi */}
+                <div>
+                  <h4 className="mb-2 font-semibold">Nilai Ekonomi</h4>
+                  {[
+                    "Pangan",
+                    "Industri Minuman",
+                    "Komoditas Global",
+                    "Furniture",
+                  ].map((value) => (
+                    <Button
+                      key={value}
+                      variant={
+                        advancedFilters.economicValue?.includes(value)
+                          ? "default"
+                          : "outline"
+                      }
+                      size="sm"
+                      className="mr-2 mb-2"
+                      onClick={() => {
+                        setAdvancedFilters((prev) => ({
+                          ...prev,
+                          economicValue: prev.economicValue?.includes(value)
+                            ? prev.economicValue.filter((v) => v !== value)
+                            : [...(prev.economicValue || []), value],
+                        }));
+                      }}
+                    >
+                      {value}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <DrawerFooter>
+            <Button
+              onClick={() => {
+                findMatches();
+                setIsFilterDrawerOpen(false);
+              }}
+            >
+              Terapkan Filter
+            </Button>
+            <DrawerClose>
+              <Button className="w-full" variant="outline">
+                Batal
+              </Button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     );
   };
 
@@ -229,30 +368,29 @@ const RuleBasedExpertSystemPage = () => {
           </div>
         </CardHeader>
         <CardContent>
-          {matchedPlants.length > 0 ? (
-            <>
-              <div className="mb-4">
-                <div className="relative flex-grow">
-                  <Search
-                    size={16}
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-                  />
-                  <Input
-                    placeholder="Cari tanaman..."
-                    value={searchTerm}
-                    onChange={(e) => {
-                      setSearchTerm(e.target.value);
-                      findMatches();
-                    }}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              {renderSearchResults()}
-            </>
-          ) : (
-            renderCharacteristicStep()
-          )}
+          <div className="mb-4">
+            <div className="relative flex-grow">
+              <Search
+                size={16}
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+              />
+              <Input
+                placeholder="Cari tanaman..."
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  findMatches();
+                }}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          {matchedPlants.length > 0
+            ? renderSearchResults()
+            : renderCharacteristicStep()}
+
+          {renderAdvancedFilters()}
         </CardContent>
       </Card>
     </div>

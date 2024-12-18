@@ -41,12 +41,12 @@ const CHARACTERISTIC_STEPS: CharacteristicStep[] = [
         type: "leafType",
         description: "Daun dengan struktur menyirip seperti daun pakis",
       },
-      {
-        label: "Lainnya",
-        value: "Tipe Lain",
-        type: "leafType",
-        description: "Struktur daun dengan karakteristik khusus",
-      },
+      // {
+      //   label: "Lainnya",
+      //   value: "Tipe Lain",
+      //   type: "leafType",
+      //   description: "Struktur daun dengan karakteristik khusus",
+      // },
     ],
   },
   {
@@ -83,12 +83,12 @@ const CHARACTERISTIC_STEPS: CharacteristicStep[] = [
         type: "habitat",
         description: "Lingkungan dekat dengan garis pantai",
       },
-      {
-        label: "Habitat Lain",
-        value: "Lainnya",
-        type: "habitat",
-        description: "Zona ekologi dengan karakteristik unik",
-      },
+      // {
+      //   label: "Habitat Lain",
+      //   value: "Lainnya",
+      //   type: "habitat",
+      //   description: "Zona ekologi dengan karakteristik unik",
+      // },
     ],
   },
 ];
