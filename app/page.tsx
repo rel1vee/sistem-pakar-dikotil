@@ -253,7 +253,7 @@ const RuleBasedExpertSystemPage = () => {
                       ))}
                     </ul>
                   </div>
-                  <div>
+                  <div className="space-y-1">
                     <p>
                       <strong>Habitat:</strong> {plant.habitat.join(", ")}
                     </p>
@@ -262,24 +262,23 @@ const RuleBasedExpertSystemPage = () => {
                       {plant.height.max} {plant.height.unit}
                     </p>
                     <p>
+                      <strong>Warna Buah:</strong> {plant.fruitColor.join(", ")}
+                    </p>
+                    <p>
                       <strong>Warna Bunga:</strong>{" "}
                       {plant.bloomColor.join(", ")}
                     </p>
                     <p>
-                      <strong>Warna Buah:</strong> {plant.fruitColor.join(", ")}
-                    </p>
-                    <p>
-                      <strong>Khasiat:</strong>{" "}
-                      {plant.medicinialProperties?.join(", ")}
+                      <strong>Nilai Ekonomi:</strong>{" "}
+                      {plant.economicValue?.join(", ")}
                     </p>
                     <p>
                       <strong>Peran Ekologis:</strong>{" "}
                       {plant.ecologicalRole?.join(", ")}
                     </p>
-
                     <p>
-                      <strong>Nilai Ekonomi:</strong>{" "}
-                      {plant.economicValue?.join(", ")}
+                      <strong>Khasiat:</strong>{" "}
+                      {plant.medicinialProperties?.join(", ")}
                     </p>
                   </div>
                 </div>
