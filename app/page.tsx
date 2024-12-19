@@ -1,6 +1,12 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import React, { useMemo, useState } from "react";
 import { Plant, DICOTYL_PLANTS } from "@/data/dicotil";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   TreePine,
   Search,
@@ -41,17 +47,10 @@ import {
   CharacteristicOption,
   EXPANDED_CHARACTERISTIC_STEPS,
 } from "@/data/step";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import React, { useMemo, useState } from "react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type AdvancedFilters = {
   economicValue?: string[];
   conservationStatus?: string[];
-  habitats?: string[];
 };
 
 const RuleBasedExpertSystemPage = () => {
@@ -80,7 +79,7 @@ const RuleBasedExpertSystemPage = () => {
   // Characteristic Selection Handler
   const handleCharacteristicSelection = (option: CharacteristicOption) => {
     if (!option || !option.type) {
-      setErrorMessage("Pilihan tidak valid");
+      setErrorMessage("Pilihan tidak valid.");
       return;
     }
 
@@ -97,7 +96,7 @@ const RuleBasedExpertSystemPage = () => {
         findMatches();
       }
     } catch {
-      setErrorMessage("Kesalahan dalam memilih karakteristik");
+      setErrorMessage("Kesalahan dalam memilih karakteristik.");
       resetSystem();
     }
   };
@@ -115,6 +114,10 @@ const RuleBasedExpertSystemPage = () => {
                   return plant.leafType === value;
                 case "habitat":
                   return plant.habitat.includes(value);
+                case "bloomColor":
+                  return plant.bloomColor.includes(value);
+                case "fruitColor":
+                  return plant.fruitColor.includes(value);
                 default:
                   return true;
               }
@@ -130,11 +133,7 @@ const RuleBasedExpertSystemPage = () => {
                 ))) &&
             (!advancedFilters.conservationStatus ||
               plant.conservationStatus ===
-                advancedFilters.conservationStatus[0]) &&
-            (!advancedFilters.habitats ||
-              advancedFilters.habitats.some((habitat) =>
-                plant.habitat.includes(habitat)
-              ));
+                advancedFilters.conservationStatus[0]);
 
           // Flexible Search Matching
           const searchMatch =
@@ -145,6 +144,9 @@ const RuleBasedExpertSystemPage = () => {
               .includes(searchTerm.toLowerCase()) ||
             plant.characteristics.some((char) =>
               char.toLowerCase().includes(searchTerm.toLowerCase())
+            ) ||
+            plant.uniqueFeatures.some((unique) =>
+              unique.toLowerCase().includes(searchTerm.toLowerCase())
             );
 
           return basicMatches && advancedMatches && searchMatch;
@@ -152,11 +154,11 @@ const RuleBasedExpertSystemPage = () => {
 
         setMatchedPlants(matches);
         setErrorMessage(
-          matches.length === 0 ? "Tidak ada tanaman ditemukan" : null
+          matches.length === 0 ? "Tidak ada tanaman ditemukan." : null
         );
         return matches;
       } catch {
-        setErrorMessage("Terjadi kesalahan dalam pencarian");
+        setErrorMessage("Terjadi kesalahan dalam pencarian.");
         return [];
       }
     };
@@ -207,7 +209,7 @@ const RuleBasedExpertSystemPage = () => {
         )}
 
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">
+          <h2 className="text-base lg:text-xl font-bold">
             {matchedPlants.length} Tanaman Ditemukan.
           </h2>
           <div className="flex items-center space-x-2">
@@ -215,10 +217,10 @@ const RuleBasedExpertSystemPage = () => {
               onClick={() => setIsFilterDrawerOpen(true)}
               variant="outline"
             >
-              <Filter className="mr-1 h-4 w-4" /> Filter
+              <Filter className="h-4 w-4" /> Filter
             </Button>
             <Button onClick={resetSystem} variant="outline">
-              <RefreshCcw className="mr-1 h-4 w-4" /> Ulangi
+              <RefreshCcw className="h-4 w-4" /> Ulangi
             </Button>
           </div>
         </div>
@@ -263,12 +265,22 @@ const RuleBasedExpertSystemPage = () => {
                       <strong>Warna Bunga:</strong>{" "}
                       {plant.bloomColor.join(", ")}
                     </p>
-                    {plant.economicValue && (
-                      <p>
-                        <strong>Nilai Ekonomi:</strong>{" "}
-                        {plant.economicValue.join(", ")}
-                      </p>
-                    )}
+                    <p>
+                      <strong>Warna Buah:</strong> {plant.fruitColor.join(", ")}
+                    </p>
+                    <p>
+                      <strong>Khasiat:</strong>{" "}
+                      {plant.medicinialProperties?.join(", ")}
+                    </p>
+                    <p>
+                      <strong>Peran Ekologis:</strong>{" "}
+                      {plant.ecologicalRole?.join(", ")}
+                    </p>
+
+                    <p>
+                      <strong>Nilai Ekonomi:</strong>{" "}
+                      {plant.economicValue?.join(", ")}
+                    </p>
                   </div>
                 </div>
               </AccordionContent>
@@ -285,7 +297,7 @@ const RuleBasedExpertSystemPage = () => {
       <Drawer open={isFilterDrawerOpen} onOpenChange={setIsFilterDrawerOpen}>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>Filter Lanjutan</DrawerTitle>
+            <DrawerTitle>Filter Tambahan</DrawerTitle>
             <DrawerDescription>
               Sesuaikan pencarian tanaman Anda.
             </DrawerDescription>
@@ -293,7 +305,7 @@ const RuleBasedExpertSystemPage = () => {
           <div className="p-4 space-y-4">
             {/* Tambahkan filter lanjutan di sini */}
             <div className="flex items-center justify-between">
-              <label>Mode Pencarian Lanjutan</label>
+              <label>Mode Pencarian Tambahan</label>
               <Switch
                 checked={isAdvancedMode}
                 onCheckedChange={setIsAdvancedMode}
@@ -305,9 +317,13 @@ const RuleBasedExpertSystemPage = () => {
                 <div>
                   <h4 className="mb-2 font-semibold">Nilai Ekonomi</h4>
                   {[
-                    "Pangan",
+                    "Tanaman Hias",
                     "Industri Minuman",
-                    "Komoditas Global",
+                    "Industri Pangan",
+                    "Industri Kayu",
+                    "Konstruksi",
+                    "Kosmetik",
+                    "Ekspor",
                     "Furniture",
                   ].map((value) => (
                     <Button
@@ -325,6 +341,39 @@ const RuleBasedExpertSystemPage = () => {
                           economicValue: prev.economicValue?.includes(value)
                             ? prev.economicValue.filter((v) => v !== value)
                             : [...(prev.economicValue || []), value],
+                        }));
+                      }}
+                    >
+                      {value}
+                    </Button>
+                  ))}
+                </div>
+                {/* Contoh status konversasi */}
+                <div>
+                  <h4 className="mb-2 font-semibold">Status Konversasi</h4>
+                  {[
+                    "Budidaya Intensif",
+                    "Beberapa Spesies Terancam",
+                    "Budidaya Berkelanjutan",
+                    "Tidak Terancam",
+                  ].map((value) => (
+                    <Button
+                      key={value}
+                      variant={
+                        advancedFilters.conservationStatus?.includes(value)
+                          ? "default"
+                          : "outline"
+                      }
+                      size="sm"
+                      className="mr-2 mb-2"
+                      onClick={() => {
+                        setAdvancedFilters((prev) => ({
+                          ...prev,
+                          conservationStatus: prev.conservationStatus?.includes(
+                            value
+                          )
+                            ? prev.conservationStatus.filter((v) => v !== value)
+                            : [...(prev.conservationStatus || []), value],
                         }));
                       }}
                     >

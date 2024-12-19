@@ -41,12 +41,6 @@ const CHARACTERISTIC_STEPS: CharacteristicStep[] = [
         type: "leafType",
         description: "Daun dengan struktur menyirip seperti daun pakis",
       },
-      // {
-      //   label: "Lainnya",
-      //   value: "Tipe Lain",
-      //   type: "leafType",
-      //   description: "Struktur daun dengan karakteristik khusus",
-      // },
     ],
   },
   {
@@ -83,12 +77,6 @@ const CHARACTERISTIC_STEPS: CharacteristicStep[] = [
         type: "habitat",
         description: "Lingkungan dekat dengan garis pantai",
       },
-      // {
-      //   label: "Habitat Lain",
-      //   value: "Lainnya",
-      //   type: "habitat",
-      //   description: "Zona ekologi dengan karakteristik unik",
-      // },
     ],
   },
 ];
@@ -96,51 +84,111 @@ const CHARACTERISTIC_STEPS: CharacteristicStep[] = [
 export const EXPANDED_CHARACTERISTIC_STEPS: CharacteristicStep[] = [
   ...CHARACTERISTIC_STEPS,
   {
-    title: "Nilai Ekonomi",
-    description: "Pilih kategori nilai ekonomi tanaman",
+    title: "Warna Bunga",
+    description: "Identifikasi warna bunga tanaman",
     options: [
       {
-        label: "Pangan",
-        value: "Pangan",
-        type: "economicValue",
-        description: "Tanaman yang dapat dikonsumsi atau digunakan sebagai bahan pangan"
+        label: "Putih",
+        value: "Putih",
+        type: "bloomColor",
+        description: "Bunga berwarna putih",
       },
       {
-        label: "Industri",
-        value: "Industri",
-        type: "economicValue",
-        description: "Tanaman dengan nilai industri tinggi"
+        label: "Kuning",
+        value: "Kuning",
+        type: "bloomColor",
+        description: "Bunga berwarna kuning",
       },
       {
-        label: "Obat-obatan",
-        value: "Obat",
-        type: "economicValue",
-        description: "Tanaman dengan manfaat medis atau farmasi"
-      }
-    ]
+        label: "Pink",
+        value: "Pink",
+        type: "bloomColor",
+        description: "Bunga berwarna merah muda",
+      },
+      {
+        label: "Merah",
+        value: "Merah",
+        type: "bloomColor",
+        description: "Bunga berwarna merah",
+      },
+      {
+        label: "Ungu",
+        value: "Ungu",
+        type: "bloomColor",
+        description: "Bunga berwarna ungu",
+      },
+      {
+        label: "Krem",
+        value: "Krem",
+        type: "bloomColor",
+        description: "Bunga berwarna krem",
+      },
+      {
+        label: "Hijau",
+        value: "Hijau",
+        type: "bloomColor",
+        description: "Bunga berwarna hijau",
+      },
+      // {
+      //   label: "Tidak Ada Bunga",
+      //   value: "",
+      //   type: "bloomColor",
+      //   description: "Tanaman tidak memiliki bunga"
+      // }
+    ],
   },
   {
-    title: "Status Konservasi",
-    description: "Pilih status konservasi tanaman",
+    title: "Warna Buah",
+    description: "Identifikasi warna buah tanaman",
     options: [
       {
-        label: "Tidak Terancam",
-        value: "Tidak Terancam",
-        type: "conservationStatus",
-        description: "Populasi tanaman stabil"
+        label: "Hijau",
+        value: "Hijau",
+        type: "fruitColor",
+        description: "Buah berwarna hijau",
       },
       {
-        label: "Terancam",
-        value: "Terancam",
-        type: "conservationStatus",
-        description: "Populasi tanaman berisiko"
+        label: "Kuning",
+        value: "Kuning",
+        type: "fruitColor",
+        description: "Buah berwarna kuning",
       },
       {
-        label: "Dilindungi",
-        value: "Dilindungi",
-        type: "conservationStatus",
-        description: "Tanaman dalam program perlindungan"
-      }
-    ]
-  }
+        label: "Merah",
+        value: "Merah",
+        type: "fruitColor",
+        description: "Buah berwarna merah",
+      },
+      {
+        label: "Oranye",
+        value: "Oranye",
+        type: "fruitColor",
+        description: "Buah berwarna oranye",
+      },
+      {
+        label: "Cokelat",
+        value: "Cokelat",
+        type: "fruitColor",
+        description: "Buah berwarna cokelat",
+      },
+      {
+        label: "Ungu",
+        value: "Ungu",
+        type: "fruitColor",
+        description: "Buah berwarna ungu",
+      },
+      {
+        label: "Putih",
+        value: "Putih",
+        type: "fruitColor",
+        description: "Buah berwarna putih",
+      },
+      // {
+      //   label: "Tidak Ada Buah",
+      //   value: "",
+      //   type: "fruitColor",
+      //   description: "Tanaman tidak memiliki buah"
+      // }
+    ],
+  },
 ];
